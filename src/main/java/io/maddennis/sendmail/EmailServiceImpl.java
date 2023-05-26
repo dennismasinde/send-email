@@ -2,7 +2,7 @@ package io.maddennis.sendmail;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,21 +11,20 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService{
 
-    @Autowired
-    private JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
 
     @Value("${spring.mail.username}") private String sender;
     @Override
     public String sendSimpleMail(EmailDetails details) {
         try {
-
             // Creating a simple mail message
-            SimpleMailMessage mailMessage
-                    = new SimpleMailMessage();
+            SimpleMailMessage mailMessage = new SimpleMailMessage();
 
             // Setting up necessary details
             mailMessage.setFrom(sender);
@@ -46,29 +45,22 @@ public class EmailServiceImpl implements EmailService{
 
     @Override
     public String sendMailWithAttachment(EmailDetails details) {
-        MimeMessage mimeMessage
-                = javaMailSender.createMimeMessage();
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper;
 
         try {
 
-            // Setting multipart as true for attachments to
-            // be send
-            mimeMessageHelper
-                    = new MimeMessageHelper(mimeMessage, true);
+            // Setting multipart as true for attachments to be sent
+            mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
             mimeMessageHelper.setFrom(sender);
             mimeMessageHelper.setTo(details.getRecipient());
             mimeMessageHelper.setText(details.getMsgBody());
-            mimeMessageHelper.setSubject(
-                    details.getSubject());
+            mimeMessageHelper.setSubject(details.getSubject());
 
             // Adding the attachment
-            FileSystemResource file
-                    = new FileSystemResource(
-                    new File(details.getAttachment()));
+            FileSystemResource file = new FileSystemResource(new File(details.getAttachment()));
 
-            mimeMessageHelper.addAttachment(
-                    file.getFilename(), file);
+            mimeMessageHelper.addAttachment(Objects.requireNonNull(file.getFilename()), file);
 
             // Sending the mail
             javaMailSender.send(mimeMessage);
